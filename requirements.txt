@@ -1,0 +1,17 @@
+fastapi
+
+    uvicorn[standard]
+
+    onnxruntime
+
+    numpy
+
+    pydantic
+
+    pytest
+
+    httpx
+
+    transformers
+
+
