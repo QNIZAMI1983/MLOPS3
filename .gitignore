@@ -1,11 +1,6 @@
 app/model.onnx
+app/model.onnx.data
+.venv/
+__pycache__/
+.pytest_cache/
 
-    .venv/
-
-    __pycache__/
-
-    .pytest_cache/
-
-
-
-app/model.onnx
