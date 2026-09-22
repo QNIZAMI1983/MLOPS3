@@ -1,0 +1,11 @@
+app/model.onnx
+
+    .venv/
+
+    __pycache__/
+
+    .pytest_cache/
+
+
+
+app/model.onnx
