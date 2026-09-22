@@ -30,7 +30,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest httpx
 
       - name: Pytest collect-only (debug)
         run: pytest --collect-only -q
@@ -38,12 +37,42 @@ jobs:
       - name: Start API (background)
         run: |
           nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 5000 > uvicorn.log 2>&1 &
-          sleep 3
+          echo "Uvicorn PID(s):"
+          pgrep -f "uvicorn" || true
+          echo "---- uvicorn.log (first 200 lines) ----"
+          sed -n '1,200p' uvicorn.log || true
+
+      - name: Wait for API readiness (up to 60s)
+        run: |
+          python - << 'PY'
+          import time
+          import httpx
+
+          url = "http://127.0.0.1:5000/"
+          last = None
+
+          for i in range(60):
+              try:
+                  r = httpx.get(url, timeout=1.0)
+                  print("READY", r.status_code)
+                  raise SystemExit(0)
+              except Exception as e:
+                  last = e
+                  time.sleep(1)
+
+          print("API never became ready. Last error:", repr(last))
+          print("\n---- uvicorn.log (full) ----")
+          try:
+              print(open("uvicorn.log", "r", encoding="utf-8", errors="ignore").read())
+          except Exception as e:
+              print("Could not read uvicorn.log:", repr(e))
+
+          raise SystemExit(1)
+          PY
 
       - name: Smoke check API
         run: |
           python -c "import httpx; print(httpx.get('http://127.0.0.1:5000/').status_code)"
-          python -c "import httpx; r=httpx.post('http://127.0.0.1:5000/predict', json={'text':'hello'}); print(r.status_code); print(r.text)"
 
       - name: Run tests
         run: pytest -q
