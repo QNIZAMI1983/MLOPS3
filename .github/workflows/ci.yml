@@ -19,16 +19,31 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Show repo files (debug)
+        run: |
+          pwd
+          ls -la
+          ls -la app || true
+          ls -la tests || true
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest httpx
 
+      - name: Pytest collect-only (debug)
+        run: pytest --collect-only -q
+
       - name: Start API (background)
         run: |
           nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 5000 > uvicorn.log 2>&1 &
           sleep 3
+
+      - name: Smoke check API
+        run: |
+          python -c "import httpx; print(httpx.get('http://127.0.0.1:5000/').status_code)"
+          python -c "import httpx; r=httpx.post('http://127.0.0.1:5000/predict', json={'text':'hello'}); print(r.status_code); print(r.text)"
 
       - name: Run tests
         run: pytest -q
